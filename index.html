@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    background: #080a0d;
+    font-family: 'Space Grotesk', sans-serif;
+    color: #e8eaed;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 3px;
+    width: 100vw;
+    height: 100vh;
+    background: #111518;
+  }
+
+  .panel {
+    background: #0d1117;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .panel::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    pointer-events: none;
+  }
+  .panel.btc::after    { background: linear-gradient(90deg, #f7931a, #ffcc44); }
+  .panel.stocks::after { background: linear-gradient(90deg, #00d084, #00b472); }
+  .panel.clock::after  { background: linear-gradient(90deg, #4f8ef7, #7b61ff); }
+  .panel.news::after   { background: linear-gradient(90deg, #ff4f4f, #ff8c42); }
+
+  /* ---- Header ---- */
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .panel-label {
+    font-size: 15px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: #6b7280;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .btc    .dot { background: #f7931a; }
+  .stocks .dot { background: #00d084; }
+  .clock  .dot { background: #4f8ef7; }
+  .news   .dot { background: #ff4f4f; }
+
+  .live-badge {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.1em; padding: 3px 10px;
+    border-radius: 3px; color: #ff4f4f;
+    background: rgba(255,79,79,0.12);
+    border: 1px solid rgba(255,79,79,0.2);
+    animation: livepulse 2s ease-in-out infinite;
+  }
+  @keyframes livepulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  .last-updated { font-size: 12px; color: #4a5568; }
+
+  /* ---- CRYPTO PANEL ---- */
+  .crypto-grid { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .crypto-card {
+    background: #141920; border-radius: 8px; padding: 10px 14px;
+    border: 1px solid #1c2330; flex: 1;
+    display: flex; flex-direction: row; align-items: stretch; justify-content: space-between;
+  }
+  .crypto-left { display: flex; flex-direction: column; justify-content: center; flex-shrink: 0; }
+  .crypto-chart-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; padding: 4px 14px; }
+  .crypto-chart { flex: 1; display: flex; align-items: center; opacity: 0.85; }
+  .crypto-chart-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #4a5568; margin-top: 10px; flex-shrink: 0;
+  }
+  .crypto-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(32px, 4.6vw, 62px); font-weight: 700;
+    text-transform: uppercase; letter-spacing: -0.5px;
+  }
+  .crypto-right { flex-shrink: 0; text-align: right; display: flex; flex-direction: column; justify-content: center; }
+  .crypto-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(28px, 4.2vw, 56px);
+    font-weight: 700; line-height: 1;
+  }
+  .crypto-change {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(14px, 1.9vw, 22px); margin-top: 4px;
+  }
+
+  /* ---- STOCKS PANEL ---- */
+  .stocks-scroll {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); gap: 4px;
+  }
+  .stocks-scroll::-webkit-scrollbar { width: 3px; }
+  .stocks-scroll::-webkit-scrollbar-thumb { background: #1c2330; border-radius: 2px; }
+
+  .stock-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    background: #141920; border-radius: 6px; border: 1px solid #1c2330;
+  }
+  .stock-left { display: flex; flex-direction: column; justify-content: center; flex-shrink: 0; }
+  .stock-ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(20px, 2.8vw, 32px); font-weight: 700; color: #e8eaed;
+  }
+  .stock-right { text-align: right; }
+  .stock-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(18px, 2.4vw, 28px); font-weight: 500;
+  }
+  .stock-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(13px, 1.6vw, 18px); margin-top: 2px;
+  }
+  .up { color: #00d084; }
+  .dn { color: #ff4f4f; }
+
+  .stock-spark { flex-shrink: 0; margin: 0 6px; display: flex; align-items: center; }
+
+  /* ---- CLOCK PANEL ---- */
+  .clock-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    flex: 1;
+  }
+  .clock-cell {
+    background: #141920;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid #1c2330;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto;
+    column-gap: 10px;
+    align-items: center;
+  }
+  .clock-city {
+    grid-column: 1;
+    font-size: clamp(17px, 2.6vw, 30px); color: #8899a6;
+    letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .clock-time-row { grid-column: 1; display: flex; align-items: center; gap: 8px; }
+  .clock-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(42px, 7vw, 84px);
+    font-weight: 500; color: #4f8ef7;
+    line-height: 1; letter-spacing: -1px;
+  }
+  .clock-ampm {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(28px, 3.8vw, 52px); color: #4f8ef7;
+    font-weight: 300;
+  }
+  .clock-date { grid-column: 1; font-size: clamp(20px, 3.0vw, 38px); color: #8899a6; margin-top: 6px; font-weight: 500; letter-spacing: 0.04em; }
+  .clock-offset { font-size: 8px; color: #1e2733; margin-top: 2px; }
+  .clock-analog { grid-column: 2; grid-row: 1 / 4; align-self: center; justify-self: center; }
+
+  /* ---- NEWS PANEL ---- */
+  .news-scroll { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  .news-item {
+    flex: 1;
+    padding: 5px 0;
+    border-bottom: 1px solid #1c2330;
+    cursor: pointer;
+    transition: background .15s;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item:hover { background: #141920; padding-left: 6px; border-radius: 4px; }
+  .news-title {
+    font-size: clamp(15px, 2.1vw, 24px); color: #c5cdd8;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .placeholder { color: #4a5568; font-size: 14px; text-align: center; padding: 20px 0; }
+
+  /* ---- EDIT STOCKS ---- */
+  #stock-editor {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #141920; border: 1px solid #2d3748;
+    border-radius: 10px; padding: 20px;
+    z-index: 999; width: 280px;
+    display: none;
+  }
+  #stock-editor h3 { font-size: 13px; color: #e8eaed; margin-bottom: 12px; }
+  #stock-editor input {
+    width: 100%; padding: 8px 10px;
+    background: #0d1117; border: 1px solid #2d3748;
+    border-radius: 6px; color: #e8eaed;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; margin-bottom: 8px;
+    outline: none;
+  }
+  #stock-editor input:focus { border-color: #4f8ef7; }
+  #stock-editor .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+  #stock-editor button {
+    flex: 1; padding: 7px;
+    border-radius: 6px; border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-save { background: #4f8ef7; color: #fff; }
+  .btn-cancel { background: #1c2330; color: #8899a6; }
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    z-index: 998; display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="grid">
+
+  <!-- ═══════════════ BTC / CRYPTO ═══════════════ -->
+  <div class="panel btc">
+    <div class="panel-header">
+      <div class="panel-label"><span class="dot"></span> Crypto Markets</div>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div class="crypto-grid">
+      <div class="crypto-card">
+        <div class="crypto-left">
+          <div class="crypto-name" style="color:#f7931a">Bitcoin</div>
+        </div>
+        <div class="crypto-chart-wrap">
+          <div class="crypto-chart" id="btcChart"></div>
+        </div>
+        <div class="crypto-right">
+          <div class="crypto-price" id="btcPrice" style="color:#f7931a">Loading…</div>
+          <div class="crypto-change" id="btcChange"></div>
+        </div>
+      </div>
+      <div class="crypto-card">
+        <div class="crypto-left">
+          <div class="crypto-name" style="color:#7b61ff">Ethereum</div>
+        </div>
+        <div class="crypto-chart-wrap">
+          <div class="crypto-chart" id="ethChart"></div>
+        </div>
+        <div class="crypto-right">
+          <div class="crypto-price" id="ethPrice" style="color:#7b61ff">—</div>
+          <div class="crypto-change" id="ethChange"></div>
+        </div>
+      </div>
+      <div class="crypto-card">
+        <div class="crypto-left">
+          <div class="crypto-name" style="color:#c2a633">Dogecoin</div>
+        </div>
+        <div class="crypto-chart-wrap">
+          <div class="crypto-chart" id="dogeChart"></div>
+        </div>
+        <div class="crypto-right">
+          <div class="crypto-price" id="dogePrice" style="color:#c2a633">—</div>
+          <div class="crypto-change" id="dogeChange"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ STOCKS ═══════════════ -->
+  <div class="panel stocks">
+    <div class="panel-header">
+      <div class="panel-label"><span class="dot"></span> Stocks</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="live-badge">LIVE</span>
+        <button onclick="openEditor()" style="background:none;border:1px solid #2d3748;color:#4a5568;border-radius:4px;padding:2px 8px;font-size:9px;cursor:pointer;font-family:'Space Grotesk',sans-serif">EDIT</button>
+      </div>
+    </div>
+    <div class="stocks-scroll" id="stockFeed">
+      <div class="placeholder">Loading stocks…</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ WORLD CLOCK ═══════════════ -->
+  <div class="panel clock">
+    <div class="panel-header">
+      <div class="panel-label"><span class="dot"></span> World Clock</div>
+      <span class="last-updated" id="clockDate"></span>
+    </div>
+    <div class="clock-grid">
+      <div class="clock-cell">
+        <div class="clock-city">Los Angeles</div>
+        <div class="clock-time-row">
+          <div class="clock-time" id="clkLA">--:--</div>
+          <div class="clock-ampm" id="clkLAap"></div>
+        </div>
+        <div class="clock-date" id="clkLAd"></div>
+        <canvas class="clock-analog" id="clkLAcvs" width="160" height="160"></canvas>
+      </div>
+      <div class="clock-cell">
+        <div class="clock-city">Taipei</div>
+        <div class="clock-time-row">
+          <div class="clock-time" id="clkTP">--:--</div>
+          <div class="clock-ampm" id="clkTPap"></div>
+        </div>
+        <div class="clock-date" id="clkTPd"></div>
+        <canvas class="clock-analog" id="clkTPcvs" width="160" height="160"></canvas>
+      </div>
+      <div class="clock-cell">
+        <div class="clock-city">Mumbai / India</div>
+        <div class="clock-time-row">
+          <div class="clock-time" id="clkIN">--:--</div>
+          <div class="clock-ampm" id="clkINap"></div>
+        </div>
+        <div class="clock-date" id="clkINd"></div>
+        <canvas class="clock-analog" id="clkINcvs" width="160" height="160"></canvas>
+      </div>
+      <div class="clock-cell">
+        <div class="clock-city">New York</div>
+        <div class="clock-time-row">
+          <div class="clock-time" id="clkNY">--:--</div>
+          <div class="clock-ampm" id="clkNYap"></div>
+        </div>
+        <div class="clock-date" id="clkNYd"></div>
+        <canvas class="clock-analog" id="clkNYcvs" width="160" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ US NEWS ═══════════════ -->
+  <div class="panel news">
+    <div class="panel-header">
+      <div class="panel-label"><span class="dot"></span> US News</div>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div class="news-scroll" id="newsFeed">
+      <div class="placeholder">Loading headlines…</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Stock Editor Modal -->
+<div class="overlay" id="overlay" onclick="closeEditor()"></div>
+<div id="stock-editor">
+  <h3>Edit Stocks (comma-separated tickers)</h3>
+  <input type="text" id="stockInput" placeholder="AAPL, NVDA, TSLA, MSFT, AMZN" />
+  <div style="font-size:10px;color:#4a5568;margin-top:4px">Max 10 tickers. Use Finnhub-compatible symbols.</div>
+  <div class="btn-row">
+    <button class="btn-save" onclick="saveStocks()">Save & Refresh</button>
+    <button class="btn-cancel" onclick="closeEditor()">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────
+const CRYPTO_KEY  = 'ed13ce2a87c749178ed4bdc3e9a9ae3a'; // CoinMarketCap
+const STOCKS_KEY  = 'Z21TVFJ50XYD71SQ';                   // Alpha Vantage
+const NEWS_KEY    = 'pub_90ff6c166d594c09b7aae47f77d2d404'; // newsdata.io
+
+const DEFAULT_STOCKS = ['AAPL','AMD','AMZN','GOOGL','INTC','NVDA','TSM','QQQ','VTI','VT'];
+
+const ZONES = [
+  { id:'LA', tz:'America/Los_Angeles' },
+  { id:'TP', tz:'Asia/Taipei' },
+  { id:'IN', tz:'Asia/Kolkata' },
+  { id:'NY', tz:'America/New_York' }
+];
+
+let currentStocks = JSON.parse(localStorage.getItem('watchlist') || 'null') || DEFAULT_STOCKS;
+if (currentStocks.length < 10) { currentStocks = DEFAULT_STOCKS; localStorage.removeItem('watchlist'); }
+
+// ─── CLOCKS ───────────────────────────────────────────
+function updateClocks() {
+  const now = new Date();
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+
+  ZONES.forEach(z => {
+    const timeStr = now.toLocaleTimeString('en-US', { timeZone: z.tz, hour: 'numeric', minute: '2-digit', hour12: true });
+    const match = timeStr.match(/^(\d+:\d+)\s+(AM|PM)$/i);
+    const time = match ? match[1] : timeStr;
+    const ampm = match ? match[2] : '';
+    const dateStr = now.toLocaleDateString('en-US', { timeZone: z.tz, weekday:'short', month:'short', day:'numeric' });
+
+    document.getElementById('clk'+z.id).textContent = time;
+    document.getElementById('clk'+z.id+'ap').textContent = ampm;
+    document.getElementById('clk'+z.id+'d').textContent = dateStr;
+  });
+}
+updateClocks();
+setInterval(updateClocks, 1000);
+
+// ─── ANALOG CLOCKS ────────────────────────────────────
+(function initAnalogCanvases() {
+  const dpr = window.devicePixelRatio || 1;
+  ZONES.forEach(z => {
+    const el = document.getElementById('clk' + z.id + 'cvs');
+    if (!el) return;
+    el.width  = 160 * dpr;
+    el.height = 160 * dpr;
+    el.style.width  = '160px';
+    el.style.height = '160px';
+    el.getContext('2d').scale(dpr, dpr);
+  });
+})();
+
+function getZoneTimeParts(tz) {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
+  }).formatToParts(now);
+  const get = t => parseInt(parts.find(p => p.type === t)?.value || '0');
+  return { h: get('hour') % 12, m: get('minute'), s: get('second'), ms: now.getMilliseconds() };
+}
+
+function drawAnalogClock(canvas, tz) {
+  const ctx = canvas.getContext('2d');
+  const { h, m, s, ms } = getZoneTimeParts(tz);
+  const W = parseFloat(canvas.style.width), H = W;
+  const cx = W / 2, cy = H / 2, r = W * 0.44;
+  const sc = W / 110; // scale factor for line widths
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Face ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = '#1e2a3a';
+  ctx.lineWidth = 1.5 * sc;
+  ctx.stroke();
+
+  // 12 tick marks — cardinal (12/3/6/9) thicker & longer
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const isCardinal = i % 3 === 0;
+    const inner = isCardinal ? r * 0.78 : r * 0.88;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+    ctx.lineTo(cx + Math.cos(a) * r,     cy + Math.sin(a) * r);
+    ctx.strokeStyle = isCardinal ? '#5a7a9a' : '#2d3e55';
+    ctx.lineWidth   = isCardinal ? 2.5 * sc : 1.2 * sc;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // Hour hand
+  const hAng = ((h + m / 60 + s / 3600) / 12) * Math.PI * 2 - Math.PI / 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(hAng) * r * 0.50, cy + Math.sin(hAng) * r * 0.50);
+  ctx.strokeStyle = '#c5cdd8';
+  ctx.lineWidth = 4.0 * sc;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Minute hand
+  const mAng = ((m + s / 60) / 60) * Math.PI * 2 - Math.PI / 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(mAng) * r * 0.74, cy + Math.sin(mAng) * r * 0.74);
+  ctx.strokeStyle = '#8899a6';
+  ctx.lineWidth = 2.8 * sc;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Second hand — smooth via ms interpolation
+  const sAng = ((s + ms / 1000) / 60) * Math.PI * 2 - Math.PI / 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - Math.cos(sAng) * r * 0.20, cy - Math.sin(sAng) * r * 0.20);
+  ctx.lineTo(cx + Math.cos(sAng) * r * 0.88, cy + Math.sin(sAng) * r * 0.88);
+  ctx.strokeStyle = '#ff4f4f';
+  ctx.lineWidth = 1.0 * sc;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Center cap
+  ctx.beginPath();
+  ctx.arc(cx, cy, 2.5 * sc, 0, Math.PI * 2);
+  ctx.fillStyle = '#ff4f4f';
+  ctx.fill();
+}
+
+function animateAnalogClocks() {
+  ZONES.forEach(z => {
+    const el = document.getElementById('clk' + z.id + 'cvs');
+    if (el) drawAnalogClock(el, z.tz);
+  });
+  requestAnimationFrame(animateAnalogClocks);
+}
+animateAnalogClocks();
+
+// ─── CRYPTO ───────────────────────────────────────────
+function fmtM(num) {
+  if (!num) return '—';
+  if (num >= 1e12) return '$' + (num/1e12).toFixed(2) + 'T';
+  if (num >= 1e9)  return '$' + (num/1e9).toFixed(1) + 'B';
+  return '$' + num.toLocaleString();
+}
+
+// ─── SVG SPARKLINE ──────────────────────────────────
+function makeSVGSpark(prices, w, h) {
+  if (!prices || prices.length < 2) return '';
+  const min = Math.min(...prices), max = Math.max(...prices);
+  const range = max - min || 1;
+  const pts = prices.map((p, i) => {
+    const x = (i / (prices.length - 1)) * w;
+    const y = h - 2 - ((p - min) / range) * (h - 4);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  const c = prices[prices.length - 1] >= prices[0] ? '#00d084' : '#ff4f4f';
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block"><polyline points="' + pts + '" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+
+// ─── CRYPTO 90-DAY CHARTS ────────────────────────────
+async function fetchCryptoCharts() {
+  const coins = [
+    { id: 'bitcoin',  el: 'btcChart' },
+    { id: 'ethereum', el: 'ethChart' },
+    { id: 'dogecoin', el: 'dogeChart' }
+  ];
+  for (const coin of coins) {
+    try {
+      const r = await fetch('https://api.coingecko.com/api/v3/coins/' + coin.id + '/market_chart?vs_currency=usd&days=90');
+      if (!r.ok) continue;
+      const data = await r.json();
+      const prices = (data.prices || []).map(p => p[1]);
+      const el = document.getElementById(coin.el);
+      if (el && prices.length > 1) el.innerHTML = makeSVGSpark(prices, 180, 52);
+    } catch(e) {}
+    await new Promise(res => setTimeout(res, 800));
+  }
+}
+fetchCryptoCharts();
+setInterval(fetchCryptoCharts, 3600000);
+
+async function fetchCrypto() {
+  try {
+    const d = await window.electronAPI.fetchCryptoCMC(CRYPTO_KEY);
+    if (!d || !d.data || d.status?.error_code !== 0) {
+      throw new Error(d?.status?.error_message || 'CMC error');
+    }
+    const btc  = d.data.BTC?.quote?.USD;
+    const eth  = d.data.ETH?.quote?.USD;
+    const doge = d.data.DOGE?.quote?.USD;
+
+    if (btc) {
+      document.getElementById('btcPrice').textContent = '$' + Math.round(btc.price).toLocaleString();
+      const chg = btc.percent_change_24h || 0;
+      const el  = document.getElementById('btcChange');
+      el.textContent = (chg >= 0 ? '▲ +' : '▼ ') + chg.toFixed(2) + '% (24h)';
+      el.style.color = chg >= 0 ? '#00d084' : '#ff4f4f';
+    }
+    if (eth) {
+      document.getElementById('ethPrice').textContent = '$' + eth.price.toFixed(2);
+      const chg = eth.percent_change_24h || 0;
+      const el  = document.getElementById('ethChange');
+      el.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+      el.style.color = chg >= 0 ? '#00d084' : '#ff4f4f';
+    }
+    if (doge) {
+      document.getElementById('dogePrice').textContent = '$' + doge.price.toFixed(4);
+      const chg = doge.percent_change_24h || 0;
+      const el  = document.getElementById('dogeChange');
+      el.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+      el.style.color = chg >= 0 ? '#00d084' : '#ff4f4f';
+    }
+  } catch(e) {
+    document.getElementById('btcPrice').textContent = 'Offline';
+    document.getElementById('btcChange').textContent = e.message || 'Check connection';
+  }
+}
+fetchCrypto();
+setInterval(fetchCrypto, 300000); // 5 min → ~288 calls/day, under 10k/month CMC free
+
+// ─── STOCKS (Alpha Vantage + localStorage cache) ──────────────
+const STOCK_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 h
+
+function getStockCache() {
+  try { return JSON.parse(localStorage.getItem('sgStockCache') || '{}'); } catch { return {}; }
+}
+
+function renderStockRow(row, sym, data) {
+  const { price, pct, chartPx } = data;
+  const isUp = pct >= 0, cls = isUp ? 'up' : 'dn', arrow = isUp ? '▲' : '▼';
+  const sparkHTML = makeSVGSpark(chartPx, 60, 30);
+  row.innerHTML = `
+    <div class="stock-left">
+      <div class="stock-ticker">${sym}</div>
+    </div>
+    <div class="stock-spark">${sparkHTML}</div>
+    <div class="stock-right">
+      <div class="stock-price ${cls}">$${price.toFixed(2)}</div>
+      <div class="stock-pct ${cls}">${arrow} ${Math.abs(pct).toFixed(2)}%</div>
+    </div>`;
+}
+
+async function fetchStocks() {
+  const feed = document.getElementById('stockFeed');
+  feed.innerHTML = '';
+  const cache = getStockCache();
+  const now = Date.now();
+  let fetchCount = 0;
+
+  for (let i = 0; i < currentStocks.length; i++) {
+    const sym = currentStocks[i];
+    const row = document.createElement('div');
+    row.className = 'stock-row';
+
+    const hit = cache[sym];
+    if (hit && (now - hit.ts) < STOCK_CACHE_TTL) {
+      // Serve from cache instantly — no API call
+      renderStockRow(row, sym, hit);
+      feed.appendChild(row);
+      continue;
+    }
+
+    // Actual API fetch — stagger only these
+    if (fetchCount > 0) await new Promise(r => setTimeout(r, 15000));
+    fetchCount++;
+
+    try {
+      const url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=' + sym + '&outputsize=compact&apikey=' + STOCKS_KEY;
+      const res = await fetch(url);
+      const d   = await res.json();
+      if (d.Note || d.Information || !d['Time Series (Daily)']) throw new Error('Rate limit');
+
+      const series  = d['Time Series (Daily)'];
+      const dates   = Object.keys(series);
+      const price   = parseFloat(series[dates[0]]['4. close']);
+      const prev    = parseFloat(series[dates[1]]['4. close']);
+      const pct     = ((price - prev) / prev) * 100;
+      const chartPx = dates.slice(0, 63).reverse().map(dt => parseFloat(series[dt]['4. close']));
+
+      // Save to cache
+      const c = getStockCache();
+      c[sym] = { ts: now, price, pct, chartPx };
+      localStorage.setItem('sgStockCache', JSON.stringify(c));
+
+      renderStockRow(row, sym, { price, pct, chartPx });
+    } catch(e) {
+      // Prefer stale cache over error text
+      if (hit) {
+        renderStockRow(row, sym, hit);
+      } else {
+        row.innerHTML = `
+          <div class="stock-left"><div class="stock-ticker">${sym}</div></div>
+          <div class="stock-spark"></div>
+          <div class="stock-right"><div class="stock-price" style="color:#4a5568">--</div></div>`;
+      }
+    }
+    feed.appendChild(row);
+  }
+}
+fetchStocks();
+setInterval(fetchStocks, 43200000); // 12h → ~20 AV calls/day, under 25/day free limit
+
+// ─── NEWS ─────────────────────────────────────────────
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+  if (diff < 1)  return 'just now';
+  if (diff < 60) return diff + 'm ago';
+  if (diff < 1440) return Math.floor(diff/60) + 'h ago';
+  return Math.floor(diff/1440) + 'd ago';
+}
+
+async function fetchNews() {
+  try {
+    const d = await window.electronAPI.fetchNews(NEWS_KEY);
+    if (!d || d.status !== 'success') {
+      document.getElementById('newsFeed').innerHTML =
+        `<div class="placeholder">News error: ${d?.message || 'No response'}</div>`;
+      return;
+    }
+    const feed = document.getElementById('newsFeed');
+    feed.innerHTML = '';
+    (d.results || []).forEach(a => {
+      const item = document.createElement('div');
+      item.className = 'news-item';
+      item.onclick = () => { if(a.link) window.open(a.link, '_blank'); };
+      item.innerHTML = `<div class="news-title">${a.title || ''}</div>`;
+      feed.appendChild(item);
+    });
+  } catch(e) {
+    document.getElementById('newsFeed').innerHTML =
+      `<div class="placeholder">News error: ${e.message || e}</div>`;
+  }
+}
+fetchNews();
+setInterval(fetchNews, 600000); // 10 min → 144 calls/day, under 200/day newsdata.io free
+
+// ─── STOCK EDITOR ─────────────────────────────────────
+function openEditor() {
+  document.getElementById('stockInput').value = currentStocks.join(', ');
+  document.getElementById('stock-editor').style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
+}
+function closeEditor() {
+  document.getElementById('stock-editor').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+}
+function saveStocks() {
+  const raw = document.getElementById('stockInput').value;
+  const tickers = raw.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean).slice(0,10);
+  if (tickers.length) {
+    currentStocks = tickers;
+    localStorage.setItem('watchlist', JSON.stringify(tickers));
+    fetchStocks();
+  }
+  closeEditor();
+}
+</script>
+</body>
+</html>

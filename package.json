@@ -1,0 +1,29 @@
+{
+  "name": "monitor-dashboard",
+  "version": "1.0.0",
+  "description": "Third monitor dashboard: BTC, Stocks, World Clock, US News",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "dependencies": {
+    "auto-launch": "^5.0.6"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.dennis.monitor-dashboard",
+    "productName": "MonitorDashboard",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "runAfterFinish": true
+    }
+  }
+}
