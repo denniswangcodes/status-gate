@@ -20,7 +20,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 3px;
+    gap: 1px;
     width: 100vw;
     height: 100vh;
     background: #111518;
@@ -28,7 +28,7 @@
 
   .panel {
     background: #0d1117;
-    padding: 12px 14px;
+    padding: 2px 3px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -50,14 +50,14 @@
   /* ---- Header ---- */
   .panel-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 2px;
     flex-shrink: 0;
   }
   .panel-label {
-    font-size: 15px; font-weight: 700;
+    font-size: 8px; font-weight: 700;
     letter-spacing: 0.12em; text-transform: uppercase;
     color: #6b7280;
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 3px;
   }
   .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .btc    .dot { background: #f7931a; }
@@ -80,7 +80,7 @@
   /* ---- CRYPTO PANEL ---- */
   .crypto-grid { display: flex; flex-direction: column; gap: 6px; flex: 1; }
   .crypto-card {
-    background: #141920; border-radius: 8px; padding: 10px 14px;
+    background: #141920; border-radius: 4px; padding: 2px 3px;
     border: 1px solid #1c2330; flex: 1;
     display: flex; flex-direction: row; align-items: stretch; justify-content: space-between;
   }
@@ -93,46 +93,46 @@
   }
   .crypto-name {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(32px, 4.6vw, 62px); font-weight: 700;
+    font-size: clamp(18px, 2.8vw, 28px); font-weight: 700;
     text-transform: uppercase; letter-spacing: -0.5px;
   }
   .crypto-right { flex-shrink: 0; text-align: right; display: flex; flex-direction: column; justify-content: center; }
   .crypto-price {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(28px, 4.2vw, 56px);
-    font-weight: 700; line-height: 1;
+     font-family: 'JetBrains Mono', monospace;
+     font-size: clamp(20px, 3.2vw, 34px);
+     font-weight: 700; line-height: 1;
   }
   .crypto-change {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(14px, 1.9vw, 22px); margin-top: 4px;
+    font-size: clamp(6px, 0.7vw, 8px); margin-top: 1px;
   }
 
   /* ---- STOCKS PANEL ---- */
   .stocks-scroll {
     flex: 1; overflow-y: auto; overflow-x: hidden;
-    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); gap: 4px;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); gap: 1px;
   }
   .stocks-scroll::-webkit-scrollbar { width: 3px; }
   .stocks-scroll::-webkit-scrollbar-thumb { background: #1c2330; border-radius: 2px; }
 
   .stock-row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 12px;
-    background: #141920; border-radius: 6px; border: 1px solid #1c2330;
+    padding: 2px 3px;
+    background: #141920; border-radius: 2px; border: 1px solid #1c2330;
   }
   .stock-left { display: flex; flex-direction: column; justify-content: center; flex-shrink: 0; }
   .stock-ticker {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(20px, 2.8vw, 32px); font-weight: 700; color: #e8eaed;
+    font-size: clamp(14px, 2vw, 22px); font-weight: 700; color: #e8eaed;
   }
   .stock-right { text-align: right; }
   .stock-price {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(18px, 2.4vw, 28px); font-weight: 500;
+    font-size: clamp(18px, 2.5vw, 28px); font-weight: 700;
   }
   .stock-pct {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(13px, 1.6vw, 18px); margin-top: 2px;
+    font-size: clamp(5px, 0.5vw, 7px); margin-top: 1px;
   }
   .up { color: #00d084; }
   .dn { color: #ff4f4f; }
@@ -141,64 +141,82 @@
 
   /* ---- CLOCK PANEL ---- */
   .clock-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    flex: 1;
+     grid-column: 1;
+     font-size: clamp(22px, 3vw, 38px); color: #8899a6;
+     letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+     margin-bottom: 0px;
+    min-height: 0;
   }
-  .clock-cell {
-    background: #141920;
-    border-radius: 8px;
-    padding: 10px 12px;
+     font-family: 'JetBrains Mono', monospace;
+     font-size: clamp(14px, 2vw, 22px);
+     font-weight: 700; color: #4f8ef7;
+     line-height: 1; letter-spacing: -1px;
     border: 1px solid #1c2330;
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-rows: auto auto auto;
-    column-gap: 10px;
+    column-gap: 1px;
     align-items: center;
+    min-height: 0;
   }
   .clock-city {
     grid-column: 1;
-    font-size: clamp(17px, 2.6vw, 30px); color: #8899a6;
+    font-size: clamp(12px, 1.5vw, 18px); color: #8899a6;
     letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 0px;
   }
-  .clock-time-row { grid-column: 1; display: flex; align-items: center; gap: 8px; }
+  .clock-time-row {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
   .clock-time {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(42px, 7vw, 84px);
-    font-weight: 500; color: #4f8ef7;
+    font-size: clamp(12px, 1.5vw, 18px);
+    font-weight: 700; color: #4f8ef7;
     line-height: 1; letter-spacing: -1px;
   }
   .clock-ampm {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(28px, 3.8vw, 52px); color: #4f8ef7;
-    font-weight: 300;
+    font-size: clamp(12px, 1.5vw, 18px); color: #4f8ef7;
+    font-weight: 700;
   }
-  .clock-date { grid-column: 1; font-size: clamp(20px, 3.0vw, 38px); color: #8899a6; margin-top: 6px; font-weight: 500; letter-spacing: 0.04em; }
+  .clock-date {
+    grid-column: 1;
+    font-size: clamp(12px, 1.5vw, 18px); color: #8899a6;
+    margin-top: 0px; font-weight: 500; letter-spacing: 0.04em;
+  }
+  .clock-analog {
+    grid-column: 2; grid-row: 1 / 4;
+    align-self: center; justify-self: center;
+    width: 24px !important; height: 24px !important;
+  }
   .clock-offset { font-size: 8px; color: #1e2733; margin-top: 2px; }
-  .clock-analog { grid-column: 2; grid-row: 1 / 4; align-self: center; justify-self: center; }
 
   /* ---- NEWS PANEL ---- */
-  .news-scroll { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .news-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
   .news-item {
-    flex: 1;
-    padding: 5px 0;
+    flex: 1 1 auto;
+    padding: 2px 0;
     border-bottom: 1px solid #1c2330;
     cursor: pointer;
     transition: background .15s;
     display: flex; flex-direction: column; justify-content: center;
+    min-height: 0;
   }
   .news-item:last-child { border-bottom: none; }
   .news-item:hover { background: #141920; padding-left: 6px; border-radius: 4px; }
   .news-title {
-    font-size: clamp(15px, 2.1vw, 24px); color: #c5cdd8;
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+     font-size: clamp(18px, 2vw, 28px); color: #c5cdd8;
+     line-height: 1.2;
+     display: -webkit-box;
+     -webkit-line-clamp: 1;
+     -webkit-box-orient: vertical;
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
   }
 
   .placeholder { color: #4a5568; font-size: 14px; text-align: center; padding: 20px 0; }
@@ -697,7 +715,7 @@ async function fetchNews() {
     (d.results || []).forEach(a => {
       const item = document.createElement('div');
       item.className = 'news-item';
-      item.onclick = () => { if(a.link) window.open(a.link, '_blank'); };
+      item.onclick = () => { if(a.link) window.electronAPI.openNewsLink(a.link); };
       item.innerHTML = `<div class="news-title">${a.title || ''}</div>`;
       feed.appendChild(item);
     });

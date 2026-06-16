@@ -24,6 +24,9 @@
     "nsis": {
       "oneClick": true,
       "runAfterFinish": true
+    },
+    "mac": {
+      "target": []
     }
   }
 }

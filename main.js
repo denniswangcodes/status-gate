@@ -1,14 +1,52 @@
+
+// ── All imports at the top ─────────────────────────────────────────────────
 const { app, BrowserWindow, powerMonitor, ipcMain } = require('electron');
 const path = require('path');
 const https = require('https');
 const { execSync } = require('child_process');
 
-// ── Auto-start on Windows login ──────────────────────────────────────────────
-const AutoLaunch = require('auto-launch');
-const dashLauncher = new AutoLaunch({ name: 'MonitorDashboard', path: app.getPath('exe') });
-dashLauncher.isEnabled().then(en => { if (!en) dashLauncher.enable(); });
+// ── Prevent multiple instances ─────────────────────────────────────────────
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    }
+  });
+}
+
+// ── Open news link in new window on third monitor ──────────────────────────
+ipcMain.handle('open-news-link', (event, url) => {
+  if (!url) return;
+  const { screen } = require('electron');
+  const displays = screen.getAllDisplays();
+  const target = displays[2] || displays[displays.length - 1];
+  const { x, y, width, height } = target.bounds;
+  const newsWin = new BrowserWindow({
+    x, y,
+    width: Math.floor(width * 0.8),
+    height: Math.floor(height * 0.8),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+  newsWin.loadURL(url);
+});
+
+// ── Auto-start on Windows login (Electron built-in) ──────────────────────────
+app.on('ready', () => {
+  app.setLoginItemSettings({
+    openAtLogin: false,
+    path: app.getPath('exe'),
+  });
+});
 
 let win;
+
 
 function getTargetDisplay() {
   const { screen } = require('electron');
@@ -30,6 +68,7 @@ function createWindow() {
     alwaysOnTop: false,
     skipTaskbar: false,
     resizable: false,
+    movable: false, // Prevent moving window
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -40,12 +79,6 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'index.html'));
 
   // ── Sleep / Wake handling ──────────────────────────────────────────────────
-  powerMonitor.on('suspend', () => {
-    if (win && !win.isDestroyed()) {
-      win.webContents.executeJavaScript('document.body.style.visibility="hidden"');
-    }
-  });
-
   powerMonitor.on('resume', () => {
     setTimeout(() => {
       if (win && !win.isDestroyed()) {
